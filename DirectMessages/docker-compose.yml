@@ -1,0 +1,24 @@
+﻿version: '3'
+
+services:
+  DirectMessage:
+    image: directmessages:dev
+    ports:
+      - 32790:80
+      - 32791:443
+    networks:
+      my-network:
+        ipv4_address: 172.18.0.2
+
+  cassandra-container:
+    image: cassandra:latest
+    networks:
+      my-network:
+        ipv4_address: 172.18.0.3
+
+networks:
+  my-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
