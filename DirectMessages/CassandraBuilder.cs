@@ -8,7 +8,7 @@ namespace DirectMessages
         public CassandraBuilder()
         {
             myCluster = Cluster.Builder()
-                .AddContactPoint("172.17.0.3")
+                .AddContactPoint("172.17.0.2")
                 .Build();
         }
     }

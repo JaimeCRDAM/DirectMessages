@@ -15,7 +15,9 @@ namespace DirectMessages.Repository
         public DirectMessageRepository(CassandraBuilder cassandraBuild)
         {
             _cluster = cassandraBuild.myCluster;
-            _session = _cluster.Connect("direct_message");
+            _session = _cluster.Connect();
+            _session.CreateKeyspaceIfNotExists("direct_message");
+            _session.ChangeKeyspace("direct_message");
             _mapper = new Mapper(_session);
             // Try to retrieve the table 
             _table = new Table<T>(_session);
@@ -62,12 +64,12 @@ namespace DirectMessages.Repository
             throw new NotImplementedException();
         }
 
-        public T GetById(int id)
+        public T GetById(Guid id)
         {
             throw new NotImplementedException();
         }
 
-        public Task<T> GetByIdAsync(int id)
+        public Task<T> GetByIdAsync(Guid id)
         {
             throw new NotImplementedException();
         }

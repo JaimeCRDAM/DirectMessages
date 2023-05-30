@@ -1,11 +1,11 @@
-﻿version: '3'
+version: '3.4'
 
 services:
-  DirectMessage:
-    image: directmessages:dev
-    ports:
-      - 32790:80
-      - 32791:443
+  directmessages:
+    image: ${DOCKER_REGISTRY-}directmessages
+    build:
+      context: .
+      dockerfile: DirectMessages/Dockerfile
     networks:
       my-network:
         ipv4_address: 172.18.0.2

@@ -1,13 +1,18 @@
-﻿using DirectMessages.Models;
+﻿
+using DirectMessages.Models;
 using DirectMessages.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DirectMessages.Controllers
 {
-    public class CreateMessageController : Controller
+    [ApiController]
+    public class MessageController : Controller
     {
-        private IBaseRepository<DirectMessage> _repository;
-        public CreateMessageController(IBaseRepository<DirectMessage> repository)
+        private readonly IBaseRepository<DirectMessage> _repository;
+
+        public MessageController(
+            IBaseRepository<DirectMessage> repository
+            )
         {
             _repository = repository;
         }
@@ -15,16 +20,17 @@ namespace DirectMessages.Controllers
         [Route("directmessages")]
         public IActionResult CreateDirectMessage([FromBody] DirectMessageDto request)
         {
+           
             var dm = new DirectMessage
             {
-                id = Guid.NewGuid(),
+                Id = Guid.NewGuid(),
                 SenderId = request.SenderId,
                 ChannelId = request.ChannelId,
                 Message = request.Message,
                 CreatedAt = DateTime.Now
             };
             _repository.Add(dm);
-            return Ok();
+            return Ok(dm);
         }
     }
 }

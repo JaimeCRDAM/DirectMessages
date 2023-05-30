@@ -1,12 +1,35 @@
 using DirectMessages;
 using DirectMessages.Controllers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using DirectMessages.Models;
 using DirectMessages.Repository;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(x =>
+{
+    var config = new ConfigurationManager();// Configure JWT Bearer Auth to expect our security key
+    x.RequireHttpsMetadata = false;
+    x.SaveToken = true;
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidIssuer = config["JwtSettings:Issuer"],
+        ValidAudience = config["JwtSettings:Audience"],
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(config["JwtSettings:Key"])),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+    };
+});
 
 builder.Services.AddSingleton<CassandraBuilder>();
 builder.Services.AddSingleton<IBaseRepository<DirectMessageChannel>, CreateDmRepository<DirectMessageChannel>>();
@@ -26,7 +49,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthorization();
 

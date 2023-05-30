@@ -2,6 +2,8 @@
 using Cassandra.Data.Linq;
 using Cassandra.Mapping;
 using GenericTools.Database;
+using System;
+using System.Data;
 using System.Linq.Expressions;
 
 namespace DirectMessages.Repository
@@ -15,9 +17,11 @@ namespace DirectMessages.Repository
         public CreateDmRepository(CassandraBuilder cassandraBuild)
         {
             _cluster = cassandraBuild.myCluster;
-            _session = _cluster.Connect("direct_message_channel");
+            _session = _cluster.Connect();
+            _session.CreateKeyspaceIfNotExists("direct_message_channel");
+            _session.ChangeKeyspace("direct_message_channel");
             _mapper = new Mapper(_session);
-            // Try to retrieve the table 
+
             _table = new Table<T>(_session);
             _table.CreateIfNotExists();
         }
@@ -29,17 +33,21 @@ namespace DirectMessages.Repository
 
         public Task AddAsync(T entity)
         {
-            throw new NotImplementedException();
+            return Task.Run(() => {
+                _table.Insert(entity).Execute();
+            });
         }
 
         public void Delete(T entity)
         {
-            throw new NotImplementedException();
+            _mapper.Delete(entity);
         }
 
         public Task DeleteAsync(T entity)
         {
-            throw new NotImplementedException();
+            return Task.Run(() => {
+                _mapper.Delete(entity);
+            });
         }
 
         public IEnumerable<T> Find(Expression<Func<T, bool>> predicate)
@@ -49,12 +57,14 @@ namespace DirectMessages.Repository
 
         public Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
         {
-            throw new NotImplementedException();
+            return Task.Run(() => {
+                return _table.Where(predicate).AllowFiltering().Execute();
+            });
         }
 
         public IEnumerable<T> GetAll()
         {
-            throw new NotImplementedException();
+            return _table.Select(x => x).Execute();
         }
 
         public Task<IEnumerable<T>> GetAllAsync()
@@ -62,24 +72,27 @@ namespace DirectMessages.Repository
             throw new NotImplementedException();
         }
 
-        public T GetById(int id)
+        public T GetById(Guid id)
         {
-            throw new NotImplementedException();
+            return _table.First(x => x.Id == id).Execute();
         }
 
-        public Task<T> GetByIdAsync(int id)
+        public Task<T> GetByIdAsync(Guid id)
         {
-            throw new NotImplementedException();
+            return _table.First(x => x.Id == id).ExecuteAsync();
         }
 
         public void Update(T entity)
         {
-            throw new NotImplementedException();
+            _mapper.Update(entity);
         }
 
         public Task UpdateAsync(T entity)
         {
-            throw new NotImplementedException();
+            return Task.Run(() => {
+                _mapper.Update(entity);
+            });
         }
+
     }
 }

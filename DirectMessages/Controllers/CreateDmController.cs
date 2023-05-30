@@ -1,6 +1,7 @@
 ﻿using DirectMessages.Models;
 using DirectMessages.Models.DTO;
 using DirectMessages.Repository;
+using Guilds.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
@@ -17,21 +18,54 @@ namespace DirectMessages.Controllers
         [Route("createdmchannel")]
         public IActionResult CreateDirectMessage([FromBody] CreateDmDto request)
         {
-            var exist = _repository.Find(x => x.SenderId == request.SenderId && x.Recipients == request.RecipientId).FirstOrDefault();
-
-            if (exist != null)
+            if (request.RecipientId.Count == 1)
             {
-                return BadRequest("Channel already created");
+                var recipientList = request.RecipientId;
+                recipientList.Add(request.SenderId);
+                var groupDm = new DirectMessageChannel
+                {
+                    Id = Guid.NewGuid(),
+                    Recipients = recipientList,
+                    CreatedAt = DateTime.Now
+                };
+                _repository.Add(groupDm);
+                return Ok(groupDm);
+            } else if(request.RecipientId.Count > 1)
+            {
+                var recipientList = request.RecipientId;
+                var groupDm = new DirectMessageChannel
+                {
+                    Id = Guid.NewGuid(),
+                    Recipients = recipientList,
+                    CreatedAt = DateTime.Now
+                };
+                _repository.Add(groupDm);
+                return Ok(groupDm);
             }
-            var dm = new DirectMessageChannel
+            return BadRequest();
+        }
+        [HttpPost]
+        [Route("createguildchannel")]
+        public IActionResult CreateDirectMessage([FromBody] CreateGuildTextChannelDto request)
+        {
+
+            var recipientList = request.RecipientId;
+            var groupDm = new DirectMessageChannel
             {
-                id = Guid.NewGuid(),
-                SenderId = request.SenderId,
-                Recipients = request.RecipientId,
+                Id = request.ChannelId,
+                Recipients = recipientList,
                 CreatedAt = DateTime.Now
             };
-            _repository.Add(dm);
-            return Ok(dm);
+            _repository.Add(groupDm);
+            return Ok(groupDm);
+        }
+        //GetAll
+        [HttpGet]
+        [Route("getalldmchannels")]
+        public IActionResult GetAll()
+        {
+            var dmChannels = _repository.GetAll();
+            return Ok(dmChannels);
         }
     }
 }
