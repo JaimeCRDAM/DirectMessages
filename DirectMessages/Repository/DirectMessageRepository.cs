@@ -19,14 +19,15 @@ namespace DirectMessages.Repository
             _session.CreateKeyspaceIfNotExists("direct_message");
             _session.ChangeKeyspace("direct_message");
             _mapper = new Mapper(_session);
-            // Try to retrieve the table 
+            MappingConfiguration.Global.Define<MyMappings>();
+            MyMappings.mapClasses(_session);
             _table = new Table<T>(_session);
             _table.CreateIfNotExists();
         }
 
         public void Add(T entity)
         {
-            throw new NotImplementedException();
+            _table.Insert(entity).Execute();
         }
 
         public Task AddAsync(T entity)
@@ -36,7 +37,7 @@ namespace DirectMessages.Repository
 
         public void Delete(T entity)
         {
-            throw new NotImplementedException();
+            _mapper.Delete(entity);
         }
 
         public Task DeleteAsync(T entity)
@@ -46,7 +47,7 @@ namespace DirectMessages.Repository
 
         public IEnumerable<T> Find(Expression<Func<T, bool>> predicate)
         {
-            throw new NotImplementedException();
+            return _table.Where(predicate).AllowFiltering().Execute();
         }
 
         public Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)

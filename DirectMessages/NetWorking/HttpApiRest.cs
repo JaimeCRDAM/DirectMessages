@@ -23,5 +23,12 @@ namespace DirectMessages.NetWorking
                 return false;
             }
         }
+
+        public async Task<string> GetUserNameById(Guid id)
+        {
+            var response = await _httpClient.GetAsync($"http://172.17.0.3/api/getusername/{id}");
+            string responseBody = await response.Content.ReadAsStringAsync();
+            return responseBody;
+        }
     }
 }

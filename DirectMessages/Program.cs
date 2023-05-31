@@ -5,6 +5,7 @@ using DirectMessages.Models;
 using DirectMessages.Repository;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using DirectMessages.NetWorking;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,9 @@ builder.Services.AddAuthentication(x =>
         ValidateAudience = true,
     };
 });
+builder.Services.AddSingleton<HttpClient>();
+
+builder.Services.AddSingleton<IHttpApiRest, HttpApiRest>();
 
 builder.Services.AddSingleton<CassandraBuilder>();
 builder.Services.AddSingleton<IBaseRepository<DirectMessageChannel>, CreateDmRepository<DirectMessageChannel>>();

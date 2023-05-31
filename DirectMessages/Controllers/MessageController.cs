@@ -8,29 +8,45 @@ namespace DirectMessages.Controllers
     [ApiController]
     public class MessageController : Controller
     {
-        private readonly IBaseRepository<DirectMessage> _repository;
+        private readonly IBaseRepository<DirectMessage> _DMrepository;
+        private readonly IBaseRepository<DirectMessageChannel> _DMCrepository;
 
         public MessageController(
-            IBaseRepository<DirectMessage> repository
+            IBaseRepository<DirectMessage> DMrepository,
+            IBaseRepository<DirectMessageChannel> DMCrepository
             )
         {
-            _repository = repository;
+            _DMrepository = DMrepository;
+            _DMCrepository = DMCrepository;
         }
+
         [HttpPost]
         [Route("directmessages")]
         public IActionResult CreateDirectMessage([FromBody] DirectMessageDto request)
         {
-           
             var dm = new DirectMessage
             {
                 Id = Guid.NewGuid(),
-                SenderId = request.SenderId,
+                Sender = request.Sender,
                 ChannelId = request.ChannelId,
                 Message = request.Message,
                 CreatedAt = DateTime.Now
             };
-            _repository.Add(dm);
-            return Ok(dm);
+            _DMrepository.Add(dm);
+            return Ok(dm.mapToDirectMessageDto());
+        }
+
+        [HttpGet]
+        [Route("directmessages/{channelId}")]
+        public IActionResult GetDirectMessages(Guid channelId)
+        {
+            var messages = _DMrepository.Find(dm => dm.ChannelId == channelId).OrderByDescending(dm => dm.CreatedAt).Take(50).ToList();
+            var messageDtos = new List<DirectMessageDto>();
+            foreach (var message in messages)
+            {
+                messageDtos.Add(message.mapToDirectMessageDto());
+            }
+            return Ok(messageDtos);
         }
     }
 }
