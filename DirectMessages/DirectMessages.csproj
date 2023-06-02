@@ -22,4 +22,10 @@
     <ProjectReference Include="..\..\GenericTools\GenericTools.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Accord.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

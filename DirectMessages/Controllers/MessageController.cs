@@ -1,7 +1,11 @@
 ﻿
 using DirectMessages.Models;
 using DirectMessages.Models.DTO;
+using DirectMessages.NetWorking;
+using GenericTools;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Threading.Channels;
 
 namespace DirectMessages.Controllers
 {
@@ -10,14 +14,20 @@ namespace DirectMessages.Controllers
     {
         private readonly IBaseRepository<DirectMessage> _DMrepository;
         private readonly IBaseRepository<DirectMessageChannel> _DMCrepository;
+        private readonly IHttpApiRest _httpApiRest;
+        private readonly FireBase _firebase;
 
         public MessageController(
             IBaseRepository<DirectMessage> DMrepository,
-            IBaseRepository<DirectMessageChannel> DMCrepository
+            IBaseRepository<DirectMessageChannel> DMCrepository,
+            IHttpApiRest httpApiRest,
+            FireBase firebase
             )
         {
             _DMrepository = DMrepository;
             _DMCrepository = DMCrepository;
+            _httpApiRest = httpApiRest;
+            _firebase = firebase;
         }
 
         [HttpPost]
@@ -32,7 +42,16 @@ namespace DirectMessages.Controllers
                 Message = request.Message,
                 CreatedAt = DateTime.Now
             };
+
             _DMrepository.Add(dm);
+            string json = JsonConvert.SerializeObject(dm);
+            _firebase.PublishToTopic(
+                new Dictionary<string, string>
+                {
+                    {"DirectMessage", json }
+                },
+                dm.ChannelId.ToString()
+            );
             return Ok(dm.mapToDirectMessageDto());
         }
 
@@ -40,7 +59,7 @@ namespace DirectMessages.Controllers
         [Route("directmessages/{channelId}")]
         public IActionResult GetDirectMessages(Guid channelId)
         {
-            var messages = _DMrepository.Find(dm => dm.ChannelId == channelId).OrderByDescending(dm => dm.CreatedAt).Take(50).ToList();
+            var messages = _DMrepository.Find(dm => dm.ChannelId == channelId).OrderBy(dm => dm.CreatedAt).Take(50).ToList();
             var messageDtos = new List<DirectMessageDto>();
             foreach (var message in messages)
             {

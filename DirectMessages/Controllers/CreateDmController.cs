@@ -2,9 +2,13 @@
 using DirectMessages.Models.DTO;
 using DirectMessages.NetWorking;
 using DirectMessages.Repository;
+using GenericTools;
 using Guilds.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Channels;
 
 namespace DirectMessages.Controllers
 {
@@ -12,14 +16,17 @@ namespace DirectMessages.Controllers
     {
         private IBaseRepository<DirectMessageChannel> _repository;
         private readonly IHttpApiRest _httpApiRest;
+        private readonly FireBase _firebase;
 
         public CreateDmController(
             IBaseRepository<DirectMessageChannel> repository,
-            IHttpApiRest httpApiRest
+            IHttpApiRest httpApiRest,
+            FireBase firebase
             )
         {
             _repository = repository;
             _httpApiRest = httpApiRest;
+            _firebase = firebase;
         }
         [HttpPost]
         [Route("createdmchannel")]
@@ -29,10 +36,9 @@ namespace DirectMessages.Controllers
             {
                 var notSender = request.RecipientId.Where(x => x != request.SenderId).First();
                 string recipientName = "";
-                var task = Task.Run(() => {
+                Task.Run(() => {
                     recipientName = _httpApiRest.GetUserNameById(notSender).Result;
-                });
-                task.Wait();
+                }).Wait();
                 var recipientList = request.RecipientId;
                 recipientList.Add(request.SenderId);
                 var groupDm = new DirectMessageChannel
@@ -43,6 +49,18 @@ namespace DirectMessages.Controllers
                     DirectedTo = recipientName
                 };
                 _repository.Add(groupDm);
+                Task.Run(async () => {
+                    var lol = await _httpApiRest.SubscribeToChannel(recipientList, groupDm.Id);
+                    string json = JsonConvert.SerializeObject(groupDm.mapToDictionary());
+                    _firebase.PublishToTopic(
+                        new Dictionary<string, string>
+                        {
+                        {"DirectMessageChannel",  json}
+                        },
+                        groupDm.Id.ToString()
+                    );
+                });
+
                 return Ok(groupDm);
             } else if(request.RecipientId.Count > 1)
             {
@@ -54,6 +72,7 @@ namespace DirectMessages.Controllers
                     CreatedAt = DateTime.Now
                 };
                 _repository.Add(groupDm);
+                _httpApiRest.SubscribeToChannel(recipientList, groupDm.Id);
                 return Ok(groupDm);
             }
             return BadRequest();
@@ -70,6 +89,7 @@ namespace DirectMessages.Controllers
                 Recipients = recipientList,
                 CreatedAt = DateTime.Now
             };
+            _httpApiRest.SubscribeToChannel(recipientList, groupDm.Id);
             _repository.Add(groupDm);
             return Ok(groupDm);
         }

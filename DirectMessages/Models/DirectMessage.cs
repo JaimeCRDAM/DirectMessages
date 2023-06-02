@@ -25,5 +25,16 @@ namespace DirectMessages.Models
                 Id = Id
             };
         }
+        public Dictionary<string, string> mapToDictionary()
+        {
+            return new Dictionary<string, string>
+            {
+                { "id", Id.ToString() },
+                { "channelid", ChannelId.ToString() },
+                { "sender_id", Sender.Id.ToString() },
+                { "message", Message },
+                { "created_at", CreatedAt.ToString() }
+            };
+        }
     }
 }

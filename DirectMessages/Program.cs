@@ -6,6 +6,7 @@ using DirectMessages.Repository;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using DirectMessages.NetWorking;
+using GenericTools;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,7 +32,9 @@ builder.Services.AddAuthentication(x =>
         ValidateAudience = true,
     };
 });
+builder.Services.AddSingleton<FireBase>();
 builder.Services.AddSingleton<HttpClient>();
+
 
 builder.Services.AddSingleton<IHttpApiRest, HttpApiRest>();
 
